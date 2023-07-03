@@ -28,11 +28,10 @@ class GridWorldEnv(gymnasium.Env):
         self.A_opt = 250
         self.r_t = 3.12
         self.r_a = 4.5
-        self.temperature = 32 # Degree celsius
+        self.temperature = np.random.randint(low=32, high=35)
 
         # Substrate Values
         self.S = np.zeros(int(self.tf/self.dt)+1)
-        print(len(self.S))
         # Initial Substrate
         self.S[0] = self.S0
 
@@ -58,7 +57,6 @@ class GridWorldEnv(gymnasium.Env):
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
         super().reset(seed=seed)
-
         self.t0 = 0.0  # initial time
         self.tf = 120  # final time
         self.dt = 0.1  # time step
@@ -115,7 +113,6 @@ class GridWorldEnv(gymnasium.Env):
     def step(self, action):
         # Termincation condition
         if self.i == 1199:
-            print(f"terminating at {self.i}")
             terminate = True
             return np.array([self.E[self.i]]), 0, terminate, False, {} 
         else:
@@ -123,9 +120,9 @@ class GridWorldEnv(gymnasium.Env):
             action = math.ceil(action[0])
             initial_cordinates = [self.i, self.E[self.i]]  
             if action == 2:
-                self.temperature -= 0.5
+                self.temperature -= 0.1
             else:
-                self.temperature += action/2
+                self.temperature += action/10
 
             MuX =  self.mu_opt*(math.exp(-((self.temperature - self.T_opt)**2)/self.r_t**2))
 
@@ -162,7 +159,6 @@ class GridWorldEnv(gymnasium.Env):
             if slope < 0:
                 reward = 10 * slope
                 terminate = True
-                print("Episode Ending due to decline in enzyme")
             else:
                 slope = 100 * slope
                 reward = 10 + slope
