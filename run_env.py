@@ -6,11 +6,11 @@ import math
 
 class GridWorldEnv(gymnasium.Env):
 
-    def __init__(self):
+    def run_env(self):
         self.t0 = 0.0  # initial time 
         self.tf = 120  # final time minutes
         self.dt = 0.1  # time step
-        self.observation_space  = spaces.Box(low=np.array([0]), high = np.array([20]), dtype=np.float64)
+        self.observation_space  = spaces.Box(low=np.array([0]), high = np.array([1000]), dtype=np.float64)
         self.action_space = spaces.Box(low = np.array([0]), high=np.array([2]), dtype=np.int16)
         self.X0 = 0.3e5  # cell/ml
         self.S0 = 0.2 # g/L
@@ -32,7 +32,6 @@ class GridWorldEnv(gymnasium.Env):
 
         # Substrate Values
         self.S = np.zeros(int(self.tf/self.dt)+1)
-        print(len(self.S))
         # Initial Substrate
         self.S[0] = self.S0
 
@@ -52,81 +51,12 @@ class GridWorldEnv(gymnasium.Env):
         # Change in Enzyme 
         self.E_C = np.zeros(int(self.tf/self.dt))
 
-       
-        
-
-    def reset(self, seed=None, options=None):
-        # We need the following line to seed self.np_random
-        super().reset(seed=seed)
-
-        self.t0 = 0.0  # initial time
-        self.tf = 120  # final time
-        self.dt = 0.1  # time step
-        self.i = 0
-        self.X0 = 0.3e5  # cell/ml
-        self.S0 = 0.2 # g/L
-        self.E0 = 0 # U/L 
-        # Process conditions
-
-        # Model Parameters
-        self.Ks = 0.1 #g/L substrate saturation coefficient
-        self.C = 0.000001 # ug/cell - glucose consumption per new cell created (growth coefficient)
-        self.MuX = 0.1 # 1/hr
-        self.MuE = .000001 # U/(cell*hr)
-        self.MuD = 0 # 1/hr
-        self.mu_opt = 1.8
-        self.T_opt = 37
-        self.A_opt = 250
-        self.r_t = 3.12
-        self.r_a = 4.5
-        self.temperature = np.random.randint(low=32, high=35)
-
-        # Substrate Values
-        self.S = np.zeros(int(self.tf/self.dt)+1)
-        # Initial Substrate
-        self.S[0] = self.S0
-
-        # Cell Values
-        self.X = np.zeros(int(self.tf/self.dt)+1)
-        # initial Cell concentration value
-        self.X[0] = self.X0
-
-        # Enzyme concentration
-        self.E0 = 0
-        self.E = np.zeros(int(self.tf/self.dt)+1)
-        self.E[0] = self.E0
-
-        # Time steps
-        self.t = np.arange(self.t0, self.tf+self.dt, self.dt)
-
-        # Change in Enzyme 
-        self.E_C = np.zeros(int(self.tf/self.dt))
-
-        # Reset makes the enzyme concetration 0
-        observation = np.array([self.E0],dtype=float)
-        info = {}
-
-        with open("plot.txt",'w') as f:
-            f.truncate(0)
-
-        return observation, info
-
-
-    def step(self, action):
+        terminate = False
         # Termincation condition
-        if self.i == 1199:
-            print(f"terminating at {self.i}")
+        if self.i >= 1200:
             terminate = True
-            return np.array([self.E[self.i]]), 0, terminate, False, {} 
         else:
-            terminate = False
-            action = math.ceil(action[0])
-            initial_cordinates = [self.i, self.E[self.i]]  
-            if action == 2:
-                self.temperature -= 0.5
-            else:
-                self.temperature += action/2
-
+            
             MuX =  self.mu_opt*(math.exp(-((self.temperature - self.T_opt)**2)/self.r_t**2))
 
             dXdt = (MuX *self.S[self.i]) / (self.Ks + self.S[self.i]) * self.X[self.i]
@@ -162,19 +92,10 @@ class GridWorldEnv(gymnasium.Env):
             if slope < 0:
                 reward = 10 * slope
                 terminate = True
-                print("Episode Ending due to decline in enzyme")
             else:
                 slope = 100 * slope
                 reward = 10 + slope
 
-            with open('plot.txt','a') as plotting_file:
-                plotting_file.write(f"{self.i},{self.temperature}\n")
-            self.i += 1
-            return np.array([self.E[self.i+1]]), reward, terminate, False, {}
-
-    def render(self):
-        pass
-
-    
-    def close(self):
-        pass
+        info = {}
+        self.i += 1
+        return np.array([self.E[self.i+1]]), reward, terminate, False, info
