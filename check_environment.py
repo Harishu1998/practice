@@ -3,5 +3,6 @@ import gymnasium
 import gym_examples
 
 env = gymnasium.make('gym_examples/GridWorld-v0')
+env.reset()
+print(env.step(env.action_space.sample()))
 
-check_env(env)
