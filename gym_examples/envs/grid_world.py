@@ -2,6 +2,7 @@ import numpy as np
 import gymnasium
 from gymnasium import spaces
 import math
+import pandas as pd
 
 
 class GridWorldEnv(gymnasium.Env):
@@ -11,7 +12,7 @@ class GridWorldEnv(gymnasium.Env):
         self.tf = 120  # final time minutes
         self.dt = 0.1  # time step
         self.observation_space  = spaces.Box(low=np.array([0]), high = np.array([20]), dtype=np.float64)
-        self.action_space = spaces.Box(low = np.array([0]), high=np.array([2]), dtype=np.int16)
+        self.action_space = spaces.Box(low = np.array([0]), high=np.array([2]), dtype=np.int16) 
         self.X0 = 0.3e5  # cell/ml
         self.S0 = 0.2 # g/L
         self.E0 = 0 # U/L 
@@ -106,7 +107,6 @@ class GridWorldEnv(gymnasium.Env):
 
         with open("plot.txt",'w') as f:
             f.truncate(0)
-
         return observation, info
 
 
@@ -166,7 +166,15 @@ class GridWorldEnv(gymnasium.Env):
             with open('plot.txt','a') as plotting_file:
                 plotting_file.write(f"{self.i},{self.temperature}\n")
             self.i += 1
-            return np.array([self.E[self.i+1]]), reward, terminate, False, {}
+            data = {
+            'experiment_iteration': self.i,
+            'cells': self.X[self.i],
+            'substrate': self.S[self.i],
+            'Enzyme' : self.E[self.i]
+            }
+            df = pd.DataFrame(data)
+            df.to_csv("output_logs.csv",mode='a', index=True)
+            return np.array([self.E[self.i]]), reward, terminate, False, {}
 
     def render(self):
         pass

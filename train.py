@@ -1,10 +1,10 @@
 import gym_examples
 import gymnasium
 from stable_baselines3.common.env_checker import check_env
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO,A2C
 import os
 
-model = "PPO"
+model = "A2C"
 models_dir = f'models/{model}'
 logdir = 'logs'
 
@@ -17,11 +17,11 @@ if not os.path.exists(logdir):
 env = gymnasium.make('gym_examples/GridWorld-v0')
 env.reset()
 
-model = PPO('MlpPolicy',env,tensorboard_log=logdir)
+model = A2C('MlpPolicy',env,tensorboard_log=logdir)
 
 TIMESTEPS = 10000
 
 for i in range(1,1000):
-    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name='ppo',progress_bar=True)
+    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name='a2c',progress_bar=True)
     model.save(f"{models_dir}/{TIMESTEPS*i}")
 
